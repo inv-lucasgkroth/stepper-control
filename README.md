@@ -4,13 +4,13 @@
 
 | Item         | Descrição       |
 | ------------ | --------------- |
-| FrameWork    | Arduino         |
-| Plataforma   | ESP32 DevKit V1 |
 | Env. Manager | PlatformIO      |
+| FrameWork    | Arduino         |
+| Board        | ESP32 DevKit V1 |
 
 ## ESP32
 
-![Image](https://i.imgur.com/qHfmhWf.png)
+![Image](https://i.imgur.com/pnnQfdt.png)
 
 ## 485
 
