@@ -4,8 +4,6 @@
 #define dMOTOR_PULSE 13
 #define dECHO_TASK_STACK_SIZE 2048
 
-#define dTIMEOUT_COM_ELAPSE 500
-
 void pre_transmit_485();
 void post_transmit_485();
 
@@ -13,8 +11,6 @@ void com_handler(void *pvParameters);
 void send_bytes();
 
 void movimenta_motor(void *pvParameters);
-
-unsigned long int timeOut = 0;
 
 MOTOR_t motor;
 COM_t com;
@@ -29,69 +25,27 @@ void setup()
 
   bool state = false;
 
-  com.readyToSend = 0;
-  com.rx_buffer_size = 0;
-  com.readyToReceived = 1;
+  com.rx_buffer_last_pos = 0;
 
-  xTaskCreatePinnedToCore(com_handler, "com_handler", dECHO_TASK_STACK_SIZE, NULL, 1, NULL, ARDUINO_RUNNING_CORE);            // cria outra task no RTOS
-  xTaskCreatePinnedToCore(movimenta_motor, "movimenta_motor_m1", dECHO_TASK_STACK_SIZE, NULL, 1, NULL, ARDUINO_RUNNING_CORE); // cria uma task no RTOS
-}
-void funcaoLixosaDoTarkos() // Falhou miseravelmente and steel falling
-{
-  if (Serial.available() > 0 && com.readyToReceived)
-  {
-    if (com.rx_buffer_size == 0)
-    {
-      timeOut = millis();
-    }
-    com.rx_buffer[com.rx_buffer_size] = Serial.read();
-    com.rx_buffer_size++;
-
-    if ((millis() - timeOut) >= dTIMEOUT_COM_ELAPSE && com.rx_buffer_size != 0)
-    {
-      com.readyToSend = 1;
-      com.readyToReceived = 0;
-      timeOut = millis();
-    }
-  }
-
-  if (com.readyToSend && !com.readyToReceived)
-  {
-    int pos = 0;
-
-    for (pos = 0; pos < com.rx_buffer_size; pos++) // copia rx_buffer para tx_buffer
-    {
-      com.tx_buffer[pos] = com.rx_buffer[pos];
-      Serial.println(com.tx_buffer[pos]);
-    }
-
-    com.tx_buffer_size = com.rx_buffer_size;
-
-    // Serial.print("Tamanho tx buffer: ");
-    // Serial.print(com.tx_buffer_size);
-
-    pre_transmit_485();
-    send_bytes();
-    delay(5);
-    post_transmit_485();
-    com.readyToSend = 0;
-    com.rx_buffer_size = 0;
-    com.readyToReceived = 1;
-  }
+  xTaskCreatePinnedToCore(com_handler, "com_handler", dECHO_TASK_STACK_SIZE, NULL, 1, NULL, ARDUINO_RUNNING_CORE);
+  xTaskCreatePinnedToCore(movimenta_motor, "movimenta_motor_m1", dECHO_TASK_STACK_SIZE, NULL, 1, NULL, ARDUINO_RUNNING_CORE);
 }
 
 void com_handler(void *pvParameters)
 {
   (void)pvParameters;
-  Serial.setTimeout(50);
+
+  // Serial.setTimeout(50);
 
   while (1) // funcao loop() AINDA nao utilizado devido a problemas com escopo
   {
-    if (Serial.available() > 0)
-    {
-      com.tx_buffer_size = Serial.readBytes(com.rx_buffer, dBUFFER_SIZE);
+    u_int32_t n_bytes = Serial.available();
 
-      for (int pos = 0; pos < com.tx_buffer_size; pos++) // copia rx_buffer para tx_buffer
+    if (n_bytes > 0)
+    {
+      com.tx_buffer_last_pos = Serial.readBytes(com.rx_buffer, n_bytes);
+
+      for (int pos = 0; pos < com.tx_buffer_last_pos; pos++) // copia rx_buffer para tx_buffer
       {
         com.tx_buffer[pos] = com.rx_buffer[pos];
       }
@@ -99,6 +53,7 @@ void com_handler(void *pvParameters)
       pre_transmit_485();
       send_bytes();
       Serial.flush();
+      vTaskDelay(1 / portTICK_PERIOD_MS);
       post_transmit_485();
     }
   }
@@ -106,13 +61,12 @@ void com_handler(void *pvParameters)
 
 void send_bytes()
 {
-  for (int pos = 0; pos < com.tx_buffer_size; pos++) // Envia pela serial conteudo do tx_buffer
+  for (int pos = 0; pos < com.tx_buffer_last_pos; pos++) // Envia pela serial conteudo do tx_buffer
   {
     digitalWrite(dBUILTIN_LED, HIGH);
     Serial.write(com.tx_buffer[pos]);
     digitalWrite(dBUILTIN_LED, LOW);
   }
-  com.tx_buffer_size = 0;
 }
 
 void pre_transmit_485()
@@ -142,7 +96,7 @@ void movimenta_motor(void *pvParameters)
       motor.state = false;
     }
   }
-  vTaskDelay(1 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
 void loop() {}
