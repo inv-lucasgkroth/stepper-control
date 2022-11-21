@@ -9,7 +9,6 @@
 #include "driver/ledc.h"
 
 #include "types.h"
-#include "biliotecaQualquer.h"
 
 MOTOR_t motor;
 COM_t com;
@@ -18,7 +17,6 @@ void setup()
 {
   pinMode(dMAX485_DE_RE, OUTPUT);
   pinMode(dBUILTIN_LED, OUTPUT); // Define dBUILTIN_LED como saida
-  // pinMode(dMOTOR_PULSE, 155);    // Pino que envia pulsos para o driver do motor
 
   Serial.begin(9600); // Cria instancia da classe Serial, por default utiliza UART0 (TX0 - pino 41, RX0 - pino 40).
 
@@ -91,13 +89,9 @@ void setPWM_and_time_step_motor(int pwmChannel, int pwmResolution, int freq, int
 {
   Serial.println("freq");
   Serial.println(freq);
-  Serial.println("PWMChannel");
-  Serial.println(pwmChannel);
-  Serial.println("PWMResolution");
-  Serial.println(pwmResolution);
 
   ledcSetup(pwmChannel, freq, pwmResolution);
-  ledcWrite(pwmChannel, delayTimeMs);
+  ledcWrite(pwmChannel, 300);
   vTaskDelay(delayTimeMs / portTICK_PERIOD_MS);
 }
 
@@ -114,14 +108,17 @@ void movimenta_motor(void *pvParameters)
   {
 
     Serial.println("incrementando");
-    for (freq = dMIN_FREQ; freq <= dMAX_FREQ; freq = freq + 100)
+    for (freq = dMIN_FREQ; freq <= dMAX_FREQ; freq = freq + 2000)
     {
-      setPWM_and_time_step_motor(PWMChannel, PWMResolution, freq, 50);
+      setPWM_and_time_step_motor(PWMChannel, PWMResolution, freq, 15);
     }
+
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+
     Serial.println("decrementando");
-    for (freq = dMAX_FREQ; freq >= dMIN_FREQ; freq = freq - 100)
+    for (freq = dMAX_FREQ; freq >= dMIN_FREQ; freq = freq - 2000)
     {
-      setPWM_and_time_step_motor(PWMChannel, PWMResolution, freq, 50);
+      setPWM_and_time_step_motor(PWMChannel, PWMResolution, freq, 15);
     }
   }
 }

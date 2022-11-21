@@ -4,8 +4,10 @@
 #define dBUILTIN_LED GPIO_NUM_2
 #define STACK_SIZE 2048
 
+// UART
+
 #define dBUFFER_SIZE 256
-#define dMAX485_DE_RE 22
+#define dMAX485_DE_RE 22 // Controle de fluxo de dados transciever 485
 
 void com_handler(void *pvParameters);
 void send_bytes();
@@ -20,9 +22,11 @@ typedef struct COM
     int tx_buffer_last_pos;
 } COM_t;
 
+// MOTOR
+
 #define dMOTOR_PULSE GPIO_NUM_13
-#define dMAX_FREQ 3000
-#define dMIN_FREQ 500
+#define dMAX_FREQ 76000
+#define dMIN_FREQ 2000
 
 void movimenta_motor(void *pvParameters);
 
