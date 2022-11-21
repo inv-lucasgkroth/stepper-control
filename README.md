@@ -10,13 +10,25 @@
 
 ## ESP32
 
+### Pinout ESP32
+
+![Image](https://i.imgur.com/Eem7f05.png)
+
+### Pinout Placa de Desenvolvimento
+
 ![Image](https://i.imgur.com/pnnQfdt.png)
 
-## 485
+## RS485
 
 Circuito testado em desenvolvimento:
 
 ![Image](https://i.imgur.com/5AkJ9Kn.png)
+
+Pino de controle de fluxo de dados (DE/RE), verificar:
+
+``` c 
+#define dMAX485_DE_RE
+```
 
 ## Motor
 
